@@ -1,19 +1,13 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "manage.py",
+    "builds": [{
+        "src": "chatproject/wsgi.py",
         "use": "@vercel/python",
-        "config": {
-          "zeroConfig": true
-        }
-      }
-    ],
+        "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+    }],
     "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "manage.py"
-      }
+        {
+            "src": "/(.*)",
+            "dest": "chatproject/wsgi.py"
+        }
     ]
-  }
-  
+}
