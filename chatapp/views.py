@@ -90,8 +90,11 @@ def signin_view(request):
 @login_required
 def message_view(request, room_name, username):
     room, created = Room.objects.get_or_create(room_name='public-chat')
-    messages = Message.objects.filter(room=room)
-    print(type(username))
+    
+    messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
+
+    messages = messages[::-1]
+
     context = {
         "messages": messages,
         "user": username,
@@ -99,6 +102,7 @@ def message_view(request, room_name, username):
     }
     
     return render(request, '_message.html', context)
+
 
 
 def logout_view(request):

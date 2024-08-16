@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from .models import Room, Message
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -9,19 +10,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs'].get('room_name')
         self.room_group_name = f'room_{self.room_name}'
 
-        # Join room group
+        # Add the user to the room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
+        # Update user count
+        await self.update_user_count(increment=True)
+
     async def disconnect(self, close_code):
-        # Leave room group
+        # Remove the user from the room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+
+        # Update user count
+        await self.update_user_count(increment=False)
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -93,3 +100,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # Handle any other exceptions
             print(f"Error creating message: {e}")
             return None
+
+    async def update_user_count(self, increment):
+        """Update and broadcast the current user count in the room."""
+        cache_key = f'{self.room_group_name}_users'
+        current_count = cache.get(cache_key, 0)
+
+        if increment:
+            new_count = current_count + 1
+        else:
+            new_count = current_count - 1 if current_count > 0 else 0
+
+        cache.set(cache_key, new_count)
+
+        # Broadcast the new count to all users in the room
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'user_count',
+                'count': new_count,
+            }
+        )
+
+    async def user_count(self, event):
+        count = event['count']
+        # Send the current user count to the WebSocket
+        await self.send(text_data=json.dumps({
+            'user_count': count
+        }))
