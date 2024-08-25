@@ -12,6 +12,19 @@ class Room(models.Model):
     def __str__(self):
         return self.room_name
 
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    bio = models.TextField(null=True, blank=True)
+    online_status = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(null=True, blank=True)
+    display_name = models.CharField(max_length=50, null=True, blank=True)
+    location = models.CharField(max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return self.user.username
+
 class Message(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     sender = models.ForeignKey(User, on_delete=models.CASCADE)

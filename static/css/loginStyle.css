@@ -1,0 +1,124 @@
+ @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap'); 
+        body {
+           margin: 0;
+           padding: 0;
+           height: 100vh;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           background: linear-gradient(to right, #2a00b1, #f836ff);
+           font-family: 'Poppins', sans-serif;
+       }
+       
+       .container {
+           width: 100%;
+           max-width: 350px;
+           padding: 20px;
+           background-color: rgba(255, 255, 255, 0.2);
+           border-radius: 30px;
+           box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+           position: relative;
+       }
+       
+       h2 {
+           color: #fff;
+           text-align: center;
+           margin-bottom: 20px;
+           font-family: 'Poppins', sans-serif;
+       }
+
+       .error-message {
+           color: #ff4444;
+           font-size: 14px;
+           margin-bottom: 15px;
+           background-color: rgba(255, 68, 68, 0.1);
+           border-radius: 5px;
+           padding: 10px;
+           text-align: center;
+       }
+       
+       .input-group {
+           position: relative;
+           margin-bottom: 20px;
+       }
+       
+       .input-group input {
+           width: 85%;
+           padding: 10px;
+           padding-left: 35px;
+           border: 1px solid #fff;
+           color: #fff;
+           background: rgba(255, 255, 255, 0.1);
+           border-radius: 30px;
+           outline: none;
+           transition: all 0.3s ease;
+       }
+
+       .input-group input:focus {
+           border-color: #f836ff;
+           background: rgba(255, 255, 255, 0.3);
+       }
+       
+       .input-group input::placeholder {
+           color: #ddd;
+       }
+
+       .input-group .error-icon {
+           position: absolute;
+           right: 10px;
+           top: 50%;
+           transform: translateY(-50%);
+           color: #ff4444;
+           font-size: 20px;
+           display: none;
+       }
+
+       .input-group.error input {
+           border-color: #ff4444;
+           background: rgba(255, 68, 68, 0.1);
+       }
+
+       .input-group.error .error-icon {
+           display: block;
+       }
+
+       .login-btn {
+           padding: 12px;
+           background-color: #45a049;
+           border: none;
+           color: #fff;
+           font-size: 16px;
+           cursor: pointer;
+           transition: background-color 0.3s ease;
+           width: 100%;
+           font-family: 'Poppins', sans-serif;
+           font-weight: bold;
+           border-radius: 30px;
+       }
+
+       .login-btn:hover {
+           background-color: #5a0878;
+       }
+
+       @media(max-width: 480px) {
+          .container {
+              height: auto;
+              width: 80%;
+              padding: 20px;
+          }
+
+          .container h2 {
+              font-weight: bold;
+              font-size: 15px;
+              margin-bottom: 20px;
+          }
+
+          .input-group input {
+              padding: 11px;
+              padding-left: 30px;
+          }
+
+          .login-btn {
+              padding: 10px;
+          }
+       }

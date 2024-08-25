@@ -1,13 +1,15 @@
 # views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.urls import reverse
-from .models import Room, Message, OTP
+from .models import Room, Message, OTP, Profile
 from .forms import SignUpForm, SignInForm
 from .utils import generate_otp
 from django.core.mail import send_mail
+from django.contrib.auth.models import User
+
 
 
 def generate_otp(user):
@@ -22,43 +24,35 @@ def generate_otp(user):
     )
 
 def verify_otp(request):
-    if request.method == 'POST':
-        otp_code = request.POST['otp']
-        user = request.user
-        otp_instance = OTP.objects.get(user=user)
-        
-        if otp_instance.otp_code == otp_code:
-            user.is_active = True
-            user.save()
-            login(request, user)
-            return redirect('index')  # Replace 'home' with your homepage URL
-        else:
-            # Handle invalid OTP
-            return render(request, 'verify_otp.html', {'error': 'Invalid OTP'})
-    return render(request, 'verify_otp.html')
+    if request.method != 'POST':
+        return render(request, 'verify_otp.html')
+    otp_code = request.POST['otp']
+    user = request.user
+    otp_instance = OTP.objects.get(user=user)
 
+    if otp_instance.otp_code != otp_code:
+        return render(request, 'verify_otp.html', {'error': 'Invalid OTP'})
+    user.is_active = True
+    user.save()
+    login(request, user)
+    return redirect('index') 
 
 def signup_view(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                generate_otp(user)  # Send OTP
-                return redirect(reverse('verify_otp'))  # Redirect to OTP verification
-        else:
+        if not form.is_valid():
             return render(request, 'signup.html', {'form': form})
+        user = form.save()
+        username = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password1')
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            login(request, user)
+            generate_otp(user)  # Send OTP
+            return redirect(reverse('verify_otp'))  # Redirect to OTP verification
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
-
-
-
-
 
 
 
@@ -89,20 +83,31 @@ def signin_view(request):
 
 @login_required
 def message_view(request, room_name, username):
-    room, created = Room.objects.get_or_create(room_name='public-chat')
-    
-    messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
+    # Get or create the room (ensure the room name matches what you want)
+    room, created = Room.objects.get_or_create(name=room_name)
 
-    messages = messages[::-1]
+    # Get the latest 50 messages in the room, ordered by timestamp
+    messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
+    messages = messages[::-1]  # Reverse the messages to have the oldest ones first
+
+    # Retrieve the user and their profile
+    user = get_object_or_404(User, username=username)
+    profile = get_object_or_404(Profile, user=user)
 
     context = {
         "messages": messages,
-        "user": username,
+        "user": user,
         "room_name": room_name,
+        "profile": profile,  # Pass the profile to the template
     }
-    
+
     return render(request, '_message.html', context)
 
+
+
+def forgotPassword(request):
+
+    return
 
 
 def logout_view(request):

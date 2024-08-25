@@ -6,7 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Design Chat</title>
     <link rel="stylesheet" href="{% static 'css/mainPageStyle.css' %}">
+    <style>
+        .message-timestamp {
+            font-size: 10px; /* Smaller font size */
+            color: #888; /* Light gray color */
+            text-align: right; /* Align to the right */
+            margin-top: 5px; /* Optional: Add some space above the timestamp */
+        }
+        #green-btn {
+            background-color: #28a745; /* Green background color */
+            color: white; /* White text color */
+            padding: 10px 20px; /* Padding around the button */
+            border: none; /* Removing default border */
+            border-radius: 5px; /* Rounded corners */
+            font-size: 16px; /* Font size */
+            cursor: pointer; /* Pointer cursor on hover */
+            transition: background-color 0.3s ease; /* Smooth background color transition */
+        }
 
+        /* Hover effect for the button */
+        #green-btn:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+
+    </style>
 
 </head>
 <body>
@@ -36,6 +59,7 @@
 
                                     <div class="message-content">
                                         <p><span class="receiver">{{ i.sender }}</span><br>{{ i.message }}</p>
+                                        <div class="message-timestamp">{{i.timestamp}}</div>
                                     </div>
                                 </div>
                             {% else %}
@@ -45,6 +69,7 @@
                                     {% endif %}
                                     <div class="message-content">
                                         <p><span class="sender">{{ i.sender }}</span><br>{{ i.message }}</p>
+                                        <div class="message-timestamp">{{i.timestamp}}</div>
                                     </div>
                                 </div>
                             {% endif %}
@@ -62,69 +87,106 @@
             <div class="message-input">
                 <input type="hidden" id="reply-to-id" name="reply_to_id">
 
-                <i class="bi bi-search"></i><input id="msg" type="text" placeholder="Your message">
+                <i class="bi bi-search"></i><input id="msg" type="text" placeholder="Your message" autofocus>
                 <button class="submit" type="submit">Send</button>
             </div>
         </form>    
         </main>
+        
 
             {% comment %} <input type="hidden" id="reply-to-id" name="reply_to_id">
             <textarea id="msg" cols="30" name="message" rows="10" placeholder="Enter your message" required></textarea> {% endcomment %}
-        {% comment %} <button id="logout" class="logout-button">Logout</button> {% endcomment %}
-
-
-        <aside class="profile-sidebar">
-            <div class="profile-card">
-                <div class="info">
-                    <h2>Profile</h2>
-                    {% comment %} <img src="./img/pic1 (1).png" alt="Avatar"> {% endcomment %}
-                    <div class="name">
-                    <label>Name:</label>
-                    <span style="margin-left:10px;">{{user}}</span><br>
+            
+            <div class="chat-room">
+                <h2>{{ room_name }}</h2>
+            
+                <aside class="profile-sidebar">
+                    <div class="profile-card">
+                        <div class="info">
+                            <h2>Profile</h2>
+                            {% if profile.profile_picture %}
+                                <img src="{{ profile.profile_picture.url }}" alt="Avatar" class="profile-picture">
+                            {% else %}
+                                <img src="{% static 'img/default_avatar.png' %}" alt="Default Avatar" class="profile-picture">
+                            {% endif %}
+                            <div class="name">
+                                <label>Name:</label>
+                                <span style="margin-left:10px;">{{ profile.display_name }}</span><br>
+                            </div>
+                            <div class="location">
+                                <label>Location:</label>
+                                <span style="margin-left:10px;">{{ profile.location }}</span><br>
+                            </div>
+                            <div class="about">
+                                <label>About:</label>
+                                <span style="margin-left:10px;">{{ profile.bio }}</span><br>
+                            </div>
+                            <div class="status">
+                                <label>Status:</label>
+                                {% if profile.online_status %}
+                                    <span style="margin-left:10px; color:green;">Online</span><br>
+                                {% else %}
+                                    <span style="margin-left:10px; color:red;">Last Seen: {{ profile.last_seen|date:"M d, Y H:i" }}</span><br>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <button type="button" id="edit-profile-btn" onclick="toggleEditForm()">Edit Profile</button>
+                            <button type="button" id="green-btn" onclick="logout()">Logout</button>
+                        </div>
                     </div>
-                    <div class="about">
-                    <label>About:</label>
-                    <span style="margin-left: 10px;">Lorem ipsum dolor sit</span><br>
+            
+                    <!-- Edit Profile Form -->
+                    <div id="edit-profile-form" style="display:none;">
+                        <form method="post" enctype="multipart/form-data" action="{% url 'update_profile' %}">
+                            {% csrf_token %}
+                            <label for="display_name">Name:</label>
+                            <input type="text" name="display_name" value="{{ profile.display_name }}" required><br>
+            
+                            <label for="location">Location:</label>
+                            <input type="text" name="location" value="{{ profile.location }}" required><br>
+            
+                            <label for="bio">About:</label>
+                            <textarea name="bio" required>{{ profile.bio }}</textarea><br>
+            
+                            <label for="profile_picture">Profile Picture:</label>
+                            <input type="file" name="profile_picture"><br>
+            
+                            <button type="submit">Save Changes</button>
+                        </form>
                     </div>
-                    <div class="phno">
-                    <label>phno:</label>
-                    <span  style="margin-left: 10px;">91+ 9658247135</span>
-                    </div>
-                    <!-- <p>Admin</p> -->
+                </aside>
+            
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message">
+                            <strong>{{ message.user.username }}</strong>: {{ message.content }}
+                            <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
-    
-            {% comment %} <div class="online-list">
-                <div class="list-card">
-                <h3 style="margin-bottom:8px;">Online</h3>
-                <div class="online-item">
-                    <img src="./img/pic1 (1).png" alt="Avatar">
-                    <p>Alex</p>
-                    <p style=" font-size: 10px; font-weight: 700;">Admin</p>
-                </div>
-                <div class="online-item">
-                    <img src="./img/pic1 (1).png" alt="Avatar">
-                    <p>Alex</p>
-                </div>
-                <div class="online-item">
-                    <img src="./img/pic1 (1).png" alt="Avatar">
-                    <p>Alex</p>
-                </div>
-                <div class="online-item">
-                    <img src="./img/pic1 (1).png" alt="Avatar">
-                    <p>Alex</p>
-                </div>
-                <div class="online-item">
-                    <img src="./img/pic1 (1).png" alt="Avatar">
-                    <p>Alex</p>
-                </div>
-                </div>
-            </div> {% endcomment %}
-        </aside>
+            
+        
     </div>
 </body>
 <script>
-  
+
+    function toggleEditForm() {
+        var form = document.getElementById('edit-profile-form');
+        if (form.style.display === 'none' || form.style.display === '') {
+            form.style.display = 'block';
+        } else {
+            form.style.display = 'none';
+        }
+    }
+    
+
+    function scrollToBottom() {
+        const chatContainer = document.querySelector('.chat-messages');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
     const websocketProtocol = window.location.protocol === "https:" ? "wss" : "ws";
     const wsEndpoint = `${websocketProtocol}://${window.location.host}/ws/notification/{{ room_name }}/`;
     const socket = new WebSocket(wsEndpoint);
@@ -136,17 +198,23 @@
         if (data.user_count !== undefined) {
             // Update the UI with the current user count
             document.getElementById('user-count').innerText = data.user_count;
-            console.log("hello")
         } else if (data.message) {
             // Handle chat messages
         }
+        
+
     };
+
 
 document.getElementById('message-form').addEventListener('submit', function(event) {
     event.preventDefault();
     const message = document.getElementById('msg').value;
     const sender = "{{ user }}";
     const replyToId = document.getElementById('reply-to-id').value;
+
+    if (message === '') {
+        return; // Exit the function without sending the message
+    }
 
     socket.send(
         JSON.stringify({
@@ -156,6 +224,8 @@ document.getElementById('message-form').addEventListener('submit', function(even
             'reply_to_id': replyToId
         })
     );
+    scrollToBottom();
+
 });
 
 socket.addEventListener("message", (event) => {
@@ -163,7 +233,7 @@ socket.addEventListener("message", (event) => {
 
     const sender = messageData['sender'];
     const message = messageData['message'];
-    const timestamp = new Date(messageData['timestamp']).toLocaleString();
+    const timestamp = new Date(messageData['timestamp']).toLocaleTimeString();
     const replyMessage = messageData['parent_message'] ? messageData['parent_message'].message : null;
     const replySender = messageData['parent_message'] ? messageData['parent_message'].sender : null;
 
@@ -177,6 +247,7 @@ socket.addEventListener("message", (event) => {
             ${replyMessage ? `<blockquote>${replyMessage} - ${replySender}</blockquote>` : ''}
             <div class="message-content">
                 <p><span class="${sender !== "{{ user }}" ? 'receiver' : 'sender'}">${sender}</span><br>${message}</p>
+                <div class="message-timestamp">${timestamp}</div>
             </div>
             
         </div>
@@ -184,7 +255,6 @@ socket.addEventListener("message", (event) => {
 
     chatMessages.insertAdjacentHTML('beforeend', newMessageHtml);
 
-    {% comment %} scrollToBottom(); {% endcomment %}
 
     document.querySelectorAll('.message.recei, .message.received').forEach(function(element) {
         element.addEventListener('dblclick', function() {
@@ -196,7 +266,24 @@ socket.addEventListener("message", (event) => {
             replyingToDiv.style.display = 'block';
         });
     });
+    scrollToBottom();
+
 });
+
+function logout() {
+    // Redirect to the logout URL
+    window.location.href = "{% url 'logout' %}";
+}
+
+
+function focusOnInput() {
+    document.getElementById('msg').focus();
+}
+
+window.onload = function() {
+    focusOnInput(); 
+    scrollToBottom();  
+};
 
 socket.addEventListener("close", (event) => {
     console.error("Chat socket closed unexpectedly");
