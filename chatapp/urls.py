@@ -8,5 +8,6 @@ urlpatterns = [
     path('signin/', views.signin_view, name='signin'),  # Sign-in route
     path('forgotPassword/', views.forgotPassword, name='forgotPassword'),  
     path('logout/', views.logout_view, name='logout'),  # Logout route
+    path('update-profile/', views.update_profile, name='update_profile'),
     path('<str:room_name>/<str:username>/', views.message_view, name='room'),  # Chat room route
 ]

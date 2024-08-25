@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.urls import reverse
 from .models import Room, Message, OTP, Profile
-from .forms import SignUpForm, SignInForm
+from .forms import SignUpForm, SignInForm, ProfileForm
 from .utils import generate_otp
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
@@ -34,7 +34,12 @@ def verify_otp(request):
         return render(request, 'verify_otp.html', {'error': 'Invalid OTP'})
     user.is_active = True
     user.save()
+    profile, created = Profile.objects.get_or_create(user=user)
+    room, created = Room.objects.get_or_create(room_name="public-chat")
+    profile.room = room
+    profile.save()
     login(request, user)
+
     return redirect('index') 
 
 def signup_view(request):
@@ -59,7 +64,7 @@ def signup_view(request):
 def index_view(request):
     if request.user.is_authenticated:
         # Redirect authenticated users to the default room 'public-chat'
-        return redirect(reverse('room', kwargs={'room_name': 'public-chat', 'username': request.user.username}))
+            return redirect(reverse('room', kwargs={'room_name': 'public-chat', 'username': request.user.username}))
     else:
         # Redirect unauthenticated users to the sign-in page
         return redirect('signin')
@@ -84,7 +89,7 @@ def signin_view(request):
 @login_required
 def message_view(request, room_name, username):
     # Get or create the room (ensure the room name matches what you want)
-    room, created = Room.objects.get_or_create(name=room_name)
+    room, created = Room.objects.get_or_create(room_name=room_name)
 
     # Get the latest 50 messages in the room, ordered by timestamp
     messages = Message.objects.filter(room=room).order_by('-timestamp')[:50]
@@ -93,16 +98,31 @@ def message_view(request, room_name, username):
     # Retrieve the user and their profile
     user = get_object_or_404(User, username=username)
     profile = get_object_or_404(Profile, user=user)
+    connected_users = User.objects.filter(profile__room=room)
+
 
     context = {
         "messages": messages,
         "user": user,
         "room_name": room_name,
         "profile": profile,  # Pass the profile to the template
+        "connected_users": connected_users,
+
     }
 
     return render(request, '_message.html', context)
 
+
+
+def update_profile(request):
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        if form.is_valid():
+            form.save()
+            return redirect('index')  
+    else:
+        form = ProfileForm(instance=request.user.profile)
+    return render(request, '_message.html', {'form': form})
 
 
 def forgotPassword(request):
